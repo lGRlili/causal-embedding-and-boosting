@@ -30,7 +30,7 @@ def fileter_content(paper):
     # 文本中的正文,我们对其进行简单的处理,首先是将换行变为空格;然后将文本进行拼接.
     # 将换行替换为空格
     # 出现两个空格代表这里有换段落的操作,则要添加一个句号.
-    # paper = paper.replace('\n', ' ')
+    paper = paper.replace('\n', ' ')
 
     sentence = paper.lower()
     sentence = sentence.replace('&nbsp;', ' ')

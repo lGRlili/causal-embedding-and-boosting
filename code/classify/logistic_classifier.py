@@ -14,37 +14,38 @@ import functools
 from datetime import datetime
 
 # # 模拟数据点
-# def generate(sample_size, mean, cov, diff):
-#     samples_per_class = int(sample_size / 2)
-#
-#     X0 = np.random.multivariate_normal(mean, cov, samples_per_class)
-#     Y0 = np.zeros(samples_per_class)
-#
-#     for ci, d in enumerate(diff):
-#         X1 = np.random.multivariate_normal(mean + d, cov, samples_per_class)
-#         Y1 = (ci + 1) * np.ones(samples_per_class)
-#
-#         X0 = np.concatenate((X0, X1))
-#         Y0 = np.concatenate((Y0, Y1))
-#
-#     X, Y = shuffle(X0, Y0)
-#
-#     return X, Y
-#
-#
-# input_dim = 2
-# np.random.seed(10)
-# num_classes = 2  # 2分类
-# mean = np.random.randn(num_classes)
-# cov = np.eye(num_classes)
-# # dataset
-# X, Y = generate(1000, mean, cov, [3.0])
-# print(len(X), len(Y))
-# colors = ['r' if l == 0 else 'b' for l in Y[:]]
-# plt.scatter(X[:, 0], X[:, 1], c=colors)
-# plt.xlabel("Scaled age (in yrs)")
-# plt.ylabel("Tumor size (in cm)")
-# plt.show()
+def generate(sample_size, mean, cov, diff):
+    samples_per_class = int(sample_size / 2)
+
+    X0 = np.random.multivariate_normal(mean, cov, samples_per_class)
+    Y0 = np.zeros(samples_per_class)
+
+    for ci, d in enumerate(diff):
+        X1 = np.random.multivariate_normal(mean + d, cov, samples_per_class)
+        Y1 = (ci + 1) * np.ones(samples_per_class)
+
+        X0 = np.concatenate((X0, X1))
+        Y0 = np.concatenate((Y0, Y1))
+
+    X, Y = shuffle(X0, Y0)
+
+    return X, Y
+
+
+input_dim = 2
+
+num_classes = 2  # 2分类
+np.random.seed(10)
+mean = np.random.randn(num_classes)
+cov = np.eye(num_classes)
+# dataset
+X, Y = generate(1000, mean, cov, [3.0])
+print(len(X), len(Y))
+colors = ['r' if l == 0 else 'b' for l in Y[:]]
+plt.scatter(X[:, 0], X[:, 1], c=colors)
+plt.xlabel("Scaled age (in yrs)")
+plt.ylabel("Tumor size (in cm)")
+plt.show()
 starts = datetime.now()
 """
 在to_cause_effect_with_label中保存最原始的数据
@@ -611,12 +612,12 @@ print('epochs:', epochs)
 print('l2_learning_rate:', l2_learning_rate)
 print('n_hidden:', n_hidden)
 score_dict = defaultdict(int)
-num_labels = 2
+num_labels = 1
 pmi_cha_list = defaultdict(int)
 count_label_list = [0, 0, 0]
 # Generate_Data().main()
 # generate_merge_data()
-train_model()
+# train_model()
 # predict_model()
 # train_model(net_choose='tanhNN')
 # predict_model(net_choose='tanhNN')

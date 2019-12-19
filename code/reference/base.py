@@ -80,7 +80,7 @@ class BaseData(object):
             while True:
                 line = fin.readline()
                 count += 1
-                print(len(line), line)
+                # print(len(line), line)
                 if not line:
                     break
                 if len(line) > 1:
@@ -90,8 +90,12 @@ class BaseData(object):
                     if '' in s1 or '' in s2:
                         continue
                     # 其中s1 和s2都是包含不止一个单词
-                    input_left.append(s1)
-                    input_right.append(s2)
+                    if len(s1) > 0 and len(s2) > 0:
+                        if len(s1) > 50 or len(s2) > 50:
+                            pass
+                        else:
+                            input_left.append(s1)
+                            input_right.append(s2)
         return input_left, input_right
 
     @staticmethod

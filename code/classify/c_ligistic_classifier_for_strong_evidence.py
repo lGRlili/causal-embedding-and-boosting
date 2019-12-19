@@ -94,7 +94,7 @@ class Generate_Data(object):
         self.filter_pos_function_flag = 1
         self.pos_filter = {'X', 'NUM', 'PRON', 'SYM', 'SPACE', 'DET', 'PUNCT'}
         # self.pos_function = {'PART', 'ADP', 'CCONJ'}
-        self.pos_function = {'PART', 'ADP', 'CCONJ', 'ADV'}
+        self.pos_function = {'PART', 'ADP', 'CCONJ', 'ADV'}  #
         self.pos_content = {'VERB', 'ADJ', 'NOUN'}
         self.pos_other = {'INTJ', 'ADV', 'PROPN', }
         with open('stop_word.txt') as file:
@@ -103,9 +103,9 @@ class Generate_Data(object):
         # print(self.eng_stop_word)
 
         self.evidence_list = ['cause_label_to', 'phrase_and', 'cause_cue']
-        self.input_list = ['to_cause_effect_with_label/icw', 'to_cause_effect_with_label/bok',
-                           'to_cause_effect_with_label/gut']
-        # self.input_list = ['data_cause_effect/icw', 'data_cause_effect/bok', 'data_cause_effect/gut']
+        # self.input_list = ['to_cause_effect_with_label/icw', 'to_cause_effect_with_label/bok',
+        #                    'to_cause_effect_with_label/gut']
+        self.input_list = ['data_cause_effect/icw', 'data_cause_effect/bok', 'data_cause_effect/gut']
         self.output_list = ['classifier_data/fonction_classify/icw', 'classifier_data/fonction_classify/bok',
                             'classifier_data/fonction_classify/gut']
 
@@ -193,6 +193,8 @@ class Generate_Data(object):
                                    'severely', 'apparently', 'abroad', 'extremely', 'sideways', 'doubtless',
                                    'simultaneously', 'extra', 'opposite', 'thoroughly', 'under'}
 
+        # self.fonction_word_dict = {'furthermore', 'consequently', 'twice', 'closely', }
+
     def cmp(self, x, y):
         if x[3] > y[3]:
             return 1
@@ -235,9 +237,7 @@ class Generate_Data(object):
         file_list = list(sorted(glob(os.path.join(input_path, evidence + '*.npy'))))
         print(file_list)
         count1 = [0, 0, 0]
-        content_data_left = []
-        content_data_right = []
-        negtive_data = []
+        content_data_true = []
         for cause_effect_pair_path in file_list:
             now_file_name = cause_effect_pair_path.split('/')[-1]
 
@@ -245,14 +245,11 @@ class Generate_Data(object):
             cause_effect_list = np.load(cause_effect_pair_path, allow_pickle=True)
             # print(cause_effect_list)
             for cause_effect_pair in cause_effect_list:
-
-                cause_clause1, effect_clause1, direction_label, pmi_score_l_2_r, pmi_score_r_2_l = cause_effect_pair
+                cause_clause1, effect_clause1 = cause_effect_pair
                 # print([word[0] for word in cause_clause])
                 # print([word[0] for word in effect_clause])
                 # print('---')
-                if direction_label == 0:
-                    # 过滤
-                    continue
+
                 if evidence == 'phrase_and':
                     effect_clause1 = effect_clause1[:-1]
 
@@ -278,103 +275,79 @@ class Generate_Data(object):
                 effect_clause = filter(self.filter_left_word, effect_clause)
                 cause_clause, effect_clause = list(cause_clause), list(effect_clause)
                 for word in cause_clause:
-                    fonction_word_list[word[0]] += 1
-                    word_pos = word[0] + '_' + word[1]
-                    fonction_word_pos_list[word_pos] += 1
+                    self.word_list[word[0]] += 1
+                for word in effect_clause:
+                    self.word_list[word[0]] += 1
 
                 cause_clause = [word[0] for word in cause_clause]
                 effect_clause = [word[0] for word in effect_clause]
-                socre_cha = round(pmi_score_l_2_r - pmi_score_r_2_l, 2)
-                score_max = round(max(pmi_score_l_2_r, pmi_score_r_2_l), 2)
                 # pmi_cha_list[socre_cha] += 1
 
                 # 过滤
 
                 if len(cause_clause) + len(effect_clause) > 1:
+                    # print(' '.join([word for word in cause_clause]))
+                    # print(' '.join([word for word in effect_clause]))
+                    # print(' '.join([word[0] for word in cause_clause1]))
+                    # print(' '.join([word[0] for word in effect_clause1]))
+                    data_label = 1
+                    content_data_true.append([cause_clause, effect_clause, data_label])
 
-                    # if score > 0.6:
-                    # 正向主要表示前后顺序,部分表示因果顺序
-                    # 反向的句子,具有前后顺序,只看内容词可以表现出因果的含义
-                    if (socre_cha > 1) & (score_max > 2):
-                    # if (socre_cha > 2) & (score_max > 3):
-                    #     print(' '.join([word for word in cause_clause]))
-                    #     print(' '.join([word for word in effect_clause]))
-                    #     print(' '.join([word[0] for word in cause_clause1]))
-                    #     print(' '.join([word[0] for word in effect_clause1]))
-                    #     print(socre_cha, score_max, '---')
-                        data_label = 1
-                        content_data_left.append(
-                            [cause_clause, effect_clause, pmi_score_l_2_r, pmi_score_r_2_l, data_label])
-                    elif (socre_cha < -1) & (score_max > 2):
-                    # elif (socre_cha < -2) & (score_max > 3):
-                        # print(' '.join([word[0] for word in cause_clause1]))
-                        # print(' '.join([word[0] for word in effect_clause1]))
-                        # print(socre_cha, score_max, '---')
-                        data_label = 2
-                        content_data_right.append(
-                            [cause_clause, effect_clause, pmi_score_l_2_r, pmi_score_r_2_l, data_label])
-                    # elif (socre_cha > -0.2) & (socre_cha < 0.2) & (socre_cha != 0) & (score_max < 0.6) & (score_max > -1):
-                    elif (socre_cha > -0.5) & (socre_cha < 0.5) & (socre_cha != 0) & (score_max < 1) & (
-                            score_max > -1):
+                # print(fonction_word_pos_list)
+                if len(content_data_true) >= 10000:
+                    print(len(content_data_true))
+                    content_data_false = []
+                    L = len(content_data_true)
+                    for i in range(5 * L):
+                        # print(random.randint(0, L), random.randint(0, L))
+                        left = content_data_true[random.randint(0, L - 1)][0]
+                        right = content_data_true[random.randint(0, L - 1)][1]
                         data_label = 0
-                        negtive_data.append([cause_clause, effect_clause, pmi_score_l_2_r, pmi_score_r_2_l, data_label])
+                        content_data_false.append([left, right, data_label])
 
-            print(len(content_data_left), len(content_data_right), len(negtive_data))
-            print('fonction_word_pos_list:', len(fonction_word_list), len(fonction_word_pos_list))
-            # print(fonction_word_pos_list)
-            if len(content_data_left) >= 10000:
-                count1[0] += 1
-                save_path = output_path + '/' + 'content_data_left_' + str(count1[0]) + '.npy'
-                np.save(save_path, content_data_left)
-                print(save_path)
-                del content_data_left[:]
-                print_time()
-                print('保存完成')
-            if len(content_data_right) >= 10000:
-                count1[1] += 1
-                save_path = output_path + '/' + 'content_data_right_' + str(count1[1]) + '.npy'
-                np.save(save_path, content_data_right)
-                print(save_path)
-                del content_data_right[:]
-                print_time()
-                print('保存完成')
-            if len(negtive_data) >= 400000:
-                negtive_data = random.sample(negtive_data, 50000)
-                count1[2] += 1
-                save_path = output_path + '/' + 'negtive_data_' + str(count1[2]) + '.npy'
-                np.save(save_path, negtive_data)
-                print(save_path)
-                del negtive_data[:]
-                print_time()
-                print('保存完成')
+                    count1[0] += 1
+                    save_path = output_path + '/' + 'content_data_true' + str(count1[0]) + '.npy'
+                    np.save(save_path, content_data_true)
+                    save_path_false = output_path + '/' + 'content_data_false' + str(count1[0]) + '.npy'
+                    np.save(save_path_false, content_data_false)
+                    print(save_path, save_path_false)
+                    del content_data_true[:]
+                    print_time()
+                    print('保存完成')
+
         count1[0] += 1
         count1[1] += 1
         count1[2] += 1
-        save_path = output_path + '/' + 'content_data_left_' + str(count1[0]) + '.npy'
-        np.save(save_path, content_data_left)
-        save_path = output_path + '/' + 'content_data_right_' + str(count1[1]) + '.npy'
-        np.save(save_path, content_data_right)
-        save_path = output_path + '/' + 'negtive_data_' + str(count1[2]) + '.npy'
-        np.save(save_path, negtive_data)
+        content_data_false = []
+        L = len(content_data_true)
+        for i in range(5 * L):
+            # print(random.randint(0, L), random.randint(0, L))
+            left = content_data_true[random.randint(0, L - 1)][0]
+            right = content_data_true[random.randint(0, L - 1)][1]
+            data_label = 0
+            content_data_false.append([left, right, data_label])
+        save_path = output_path + '/' + 'content_data_true' + str(count1[0]) + '.npy'
+        np.save(save_path, content_data_true)
+        save_path_false = output_path + '/' + 'content_data_false' + str(count1[0]) + '.npy'
+        np.save(save_path_false, content_data_false)
+        print(save_path)
         print('保存完成')
-        print(len(fonction_word_list), fonction_word_list)
-        print(len(fonction_word_pos_list), fonction_word_pos_list)
 
     def main(self):
         for i in range(3):
             data_choose = i
-        #     break
-        # if True:
-        #     data_choose = 1
+            #     break
+            # if True:
+            #     data_choose = 1
             input_path = self.data_path + self.input_list[data_choose]
             output_path = self.data_path + self.output_list[data_choose]
 
-            self.generate_data(self.evidence_list[1], input_path, output_path)
+            self.generate_data(self.evidence_list[2], input_path, output_path)
             print(self.pos_function_dict)
             print(len(self.pos_function_dict))
             print_time()
-        print(self.word_list)
-        print(len(self.word_list))
+            print(self.word_list)
+            print(len(self.word_list))
 
 
 class Generate_Data_for_predict(Generate_Data):
@@ -440,13 +413,10 @@ def generate_merge_data():
         x_list = []
         for data in true_data:
             word_bags = [0] * (2 * len_str_id_word + 2)
-            cause_list, effect_list, socre_cha, score_max, label = data
+            cause_list, effect_list, label = data
             for word in cause_list:
-                # a = str_id_word[word]
-                word_total_list[word] += 1
                 word_bags[str_id_word[word]] += 1
             for word in effect_list:
-                word_total_list[word] += 1
                 word_bags[len_str_id_word + 1 + str_id_word[word]] += 1
             word_bags = word_bags[:input_dim]
             word_bags = preprocessing.minmax_scale(word_bags)
@@ -455,10 +425,11 @@ def generate_merge_data():
             x_list.append(word_bags)
             # print(cause_list, effect_list, word_bags)
             # x_list.append([word_bags, label])
-        # print(len(x_list))
+        print(len(x_list))
         return x_list
 
-    sample_batch_list = ['content_data_left_', 'content_data_right_', 'negtive_data_']
+    sample_batch_list = ['content_data_left_', 'content_data_right_', 'negtive_data_', 'content_data_true',
+                         'content_data_false']
 
     input_list = ['classifier_data/fonction_classify/icw', 'classifier_data/fonction_classify/bok',
                   'classifier_data/fonction_classify/gut']
@@ -468,7 +439,7 @@ def generate_merge_data():
     for data_choose in range(0, 3):
         input_path = data_path + input_list[data_choose]
         output_path = data_path + output_list[data_choose]
-        Content_file_list = list(sorted(glob(os.path.join(input_path, sample_batch_list[2] + '*.npy'))))
+        Content_file_list = list(sorted(glob(os.path.join(input_path, sample_batch_list[3] + '*.npy'))))
         count = 0
         for evidence_pair_path_id in range(len(Content_file_list)):
             count += 1
@@ -479,14 +450,8 @@ def generate_merge_data():
             print(Content_file_list[evidence_pair_path_id])
             print(output_file_name)
             Content_data = np.load(Content_file_list[evidence_pair_path_id], allow_pickle=True)
-            if len(Content_data) > 50000:
-                print(len(Content_data))
-                Content_data = random.sample(list(Content_data), 50000)
-            print(len(Content_data))
             save_data = generate_data(Content_data)
             np.save(output_file_name, save_data)
-            del Content_data
-            del save_data
         print(word_total_list)
         print(len(word_total_list))
 
@@ -530,27 +495,24 @@ def train_model(net_choose='ligistic'):
     # log_probs = tf.nn.log_softmax(logist, axis=-1)
     # per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
     # loss = tf.reduce_mean(per_example_loss)
-
     # loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(logits=logist, labels=one_hot_labels))
 
     loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=one_hot_labels, logits=logist))
     cost = loss + tf.add_n(tf.get_collection('losses'))
     predict = tf.greater(logist, 0.5)
-    predict = tf.cast(predict, dtype=tf.int32)
     acc = tf.reduce_mean(tf.cast(tf.equal(one_hot_labels, tf.cast(predict, dtype=tf.float32)), "float"), name="accuracy")
 
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logist, labels=one_hot_labels))
     # cost = loss + tf.add_n(tf.get_collection('losses'))
     # predict = tf.argmax(logist, axis=1, name="predictions", output_type=tf.int32)
     # acc = tf.reduce_mean(tf.cast(tf.equal(y, tf.cast(predict, dtype=tf.int32)), "float"), name="accuracy")
+
     """
     * 错误方法注意:此时使用sigmoid应该保证logist得到的结果>0,所以更好的方法是调用API
     output = tf.nn.sigmoid(logist)
     cost = tf.reduce_mean(-(y * tf.log(output) + (1 - y) * tf.log(1 - output)))
     """
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-    # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-
 
     display_step = 1
     saver = tf.train.Saver()
@@ -565,35 +527,33 @@ def train_model(net_choose='ligistic'):
             for data_choose in range(0, 3):
                 total_batch_all = 0
                 input_path = data_path + input_list[data_choose]
+                content_data_false_list = list(
+                    sorted(glob(os.path.join(input_path, 'content_data_false' + '*.npy'))))
+                # content_data_false_list = list(
+                #     sorted(glob(os.path.join(input_path, 'negtive_data' + '*.npy'))))
 
-                negtive_data_file_list = list(
-                    sorted(glob(os.path.join(input_path, 'negtive_data' + '*.npy'))))
-                content_data_right_file_list = list(
-                    sorted(glob(os.path.join(input_path, 'content_data_right' + '*.npy'))))
-                content_data_left_file_list = list(
-                    sorted(glob(os.path.join(input_path, 'content_data_left' + '*.npy'))))
-                for evidence_pair_path_id in range(len(content_data_right_file_list)):
-                    # print(Content_file_list[evidence_pair_path_id])
-                    content_data_left = np.load(content_data_left_file_list[evidence_pair_path_id], allow_pickle=True)
-                    content_data_right = np.load(content_data_right_file_list[evidence_pair_path_id], allow_pickle=True)
-                    negtive_data = np.load(negtive_data_file_list[evidence_pair_path_id], allow_pickle=True)
+                content_data_true_list = list(
+                    sorted(glob(os.path.join(input_path, 'content_data_true' + '*.npy'))))
+
+                print(len(content_data_true_list), len(content_data_false_list))
+
+                for evidence_pair_path_id in range(len(content_data_false_list[:3])):
+
+                    print(content_data_true_list[evidence_pair_path_id], content_data_false_list[evidence_pair_path_id])
+                    content_data_true = np.load(content_data_true_list[evidence_pair_path_id], allow_pickle=True)
+                    negtive_data = np.load(content_data_false_list[evidence_pair_path_id], allow_pickle=True)
+                    print(content_data_true.shape, negtive_data.shape)
+
                     row_rand_array = np.arange(negtive_data.shape[0])
                     np.random.shuffle(row_rand_array)
-                    negtive_data = negtive_data[row_rand_array[0:len(content_data_left)]]
-                    # negtive_data = negtive_data[row_rand_array[0:len(content_data_left) + len(content_data_right)]]
+                    negtive_data = negtive_data[row_rand_array[0:len(content_data_true)]]
                     # Content_data = np.vstack((np.vstack((content_data_left, negtive_data)), content_data_right))
-                    print(len(content_data_left), len(content_data_right), len(negtive_data))
-                    Content_data = np.vstack((content_data_left, negtive_data))
+                    Content_data = np.vstack((content_data_true, negtive_data))
+                    print(content_data_true.shape, negtive_data.shape, Content_data.shape)
                     Content_data = shuffle(Content_data)
                     x_list = Content_data[:, :-1]
+
                     y_list = Content_data[:, -1]
-                    # print(content_data_right.shape)
-                    # print(content_data_left.shape)
-                    # print(negtive_data.shape)
-                    # print(Content_data.shape)
-                    # print(x_list.shape)
-                    # print(y_list.shape)
-                    # x_list, y_list = generate_data(Content_data)
                     # x_list, y_list = list(x_list), list(y_list)
                     total_batch = len(y_list) // batch_size
                     total_batch_all += total_batch
@@ -603,13 +563,15 @@ def train_model(net_choose='ligistic'):
                         end_id = (i + 1) * batch_size
                         batch_x = x_list[start_id:end_id]
                         batch_y = y_list[start_id:end_id]
+                        # batch_y = np.reshape(batch_y, [-1, 1])
                         _, loss, acc_now = sess.run([optimizer, cost, acc], feed_dict={x: batch_x, y: batch_y})
-                        # print(sess.run([y1, one_hot_labels], feed_dict={y1: batch_y, y: batch_y}))
+
                         epoch_loss += loss
                         acc_average += acc_now
                     # trained_weights = w.eval()
                     # trained_weights = trained_weights.flatten()
                     # print(list(trained_weights))
+                # print(list(sess.run([logist, one_hot_labels, y, predict], feed_dict={x: batch_x, y: batch_y})))
 
                 epoch_loss /= total_batch_all
                 acc_average /= total_batch_all
@@ -734,7 +696,6 @@ def predict_model(checkpoint_dir='model', net_choose='ligistic'):
 
 
 if __name__ == '__main__':
-
     data_path = '../../data/'
 
     # evidence_list = ['cause_label_to']
@@ -749,22 +710,20 @@ if __name__ == '__main__':
     len_str_id_word = len(str_id_word)
     input_dim = 2 * len_str_id_word + 2
 
-    epochs = 20
+    epochs = 8
     num_labels = 1
     batch_size = 64
-    learning_rate = 1e-2
-    # print(str_id_word)
+    learning_rate = 0.01
+    print(str_id_word)
     print(input_dim)
-    l2_learning_rate = 1e-6
+    l2_learning_rate = 1e-4
     n_hidden = 50
     print('epochs:', epochs)
     print('l2_learning_rate:', l2_learning_rate)
     print('n_hidden:', n_hidden)
     score_dict = defaultdict(int)
 
-    fonction_word_list = defaultdict(int)
-    fonction_word_pos_list = defaultdict(int)
-    # Generate_Data().main()
+    Generate_Data().main()
     # generate_merge_data()
     train_model()
     # predict_model()

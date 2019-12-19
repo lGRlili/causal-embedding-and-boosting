@@ -344,7 +344,7 @@ if __name__ == '__main__':
 
     print(cause_output_path, effect_output_path)
 
-    for i in range(12, 13):
+    for i in range(2, 20):
         step = i
         tail = '_' + str(step) + '.txt'
         cause_paths, effect_paths = cause_output_path + tail, effect_output_path + tail

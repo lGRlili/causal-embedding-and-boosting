@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_list = defaultdict(int)
     file_list = shuffle(file_list)
 
-    # data_list['pos_path'] = file_list[:1]
+    data_list['pos_path'] = file_list[:1]
     # data_list['pos_path'] = 'sharp_data.txt'
     data_list['pos_path'] = 'advcl_for_embedding.txt'
     # data_list['pos_path'] = 'test.txt'

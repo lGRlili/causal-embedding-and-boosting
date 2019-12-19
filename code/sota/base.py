@@ -406,7 +406,7 @@ class BaseModel(object):
         :return:
         """
         match_matrix_masked = match_matrix * mask_matrix
-
+        # 按行 获得最大值然后与原矩阵做差
         match_matrix_shifted_1 = mask_matrix * tf.exp(
             match_matrix_masked - tf.reduce_max(match_matrix_masked, axis=1, keep_dims=True))
         match_matrix_shifted_2 = mask_matrix * tf.exp(
